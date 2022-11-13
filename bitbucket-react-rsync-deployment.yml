@@ -1,0 +1,33 @@
+image: ubuntu:jammy
+
+pipelines:
+  branches:
+    '{master}':
+      - step:
+          image: node:lts
+          caches:
+            - node
+          deployment: build
+          script:
+           - npm install
+           - npm run build
+           - echo "Build project here  $PWD"
+          artifacts:
+           - build/**
+      - step:
+          name: 'Deployment to Staging'
+          deployment: staging
+          script:
+            - pipe: atlassian/rsync-deploy:0.8.1
+              variables:
+                USER: $USER
+                SERVER: $SERVER
+                REMOTE_PATH: $REMOTE_PATH
+                LOCAL_PATH: 'build'
+                DEBUG: 'true'
+      - step:
+          name: 'Deployment to Production'
+          deployment: production
+          trigger: 'manual'
+          script:
+            - echo "Your deployment to production script goes here..."
